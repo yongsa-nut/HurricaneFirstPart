@@ -1,0 +1,664 @@
+---
+title: "Basis Analysis of Hurricane Florence"
+output: html_document
+params:
+  only_nc_sc: TRUE
+---
+
+```{r setup, include=FALSE}
+options(width = 100)
+```
+
+```{r echo=FALSE, include=FALSE}
+library(readr)
+pre_florence  <- read_csv("Data/pre-processed pre florence.csv")
+post_florence <- read_csv("Data/pre-processed post florence.csv")
+both_florence <- read_csv("Data/pre-processed both pre post florence.csv")
+```
+
+### Sample size
+
+```{r}
+dim(pre_florence)[1]
+```
+```{r}
+dim(post_florence)[1]
+```
+```{r}
+dim(both_florence)[1]
+```
+
+## inclusion/exclusion cretiria
+#### Only NC or SC
+```{r}
+table(pre_florence$state)
+table(post_florence$state)
+
+if(params$only_nc_sc)
+{
+  pre_florence <- pre_florence[which(pre_florence$state == "NC" | pre_florence$state == "SC"),]
+  post_florence <- post_florence[which(post_florence$state == "NC" | post_florence$state == "SC"),]
+}
+
+```
+
+### Sample size after exclusion
+
+```{r}
+dim(pre_florence)[1]
+```
+```{r}
+dim(post_florence)[1]
+```
+
+```{r echo=FALSE, include=FALSE}
+## Organize order of factor
+gender_order <- c("Female","Male","Other")
+pre_florence$gender  <- factor(pre_florence$gender, levels=gender_order)
+post_florence$gender <- factor(post_florence$gender, levels=gender_order)
+both_florence$pre_gender <- factor(both_florence$pre_gender, levels=gender_order)
+both_florence$post_gender <- factor(both_florence$post_gender, levels=gender_order)
+
+edu_order <- c("Some high school","High school graduate",
+               "Some college","College graduate","Graduate school")
+pre_florence$edu  <- factor(pre_florence$edu, levels=edu_order)
+post_florence$edu <- factor(post_florence$edu, levels=edu_order)
+both_florence$pre_edu <- factor(both_florence$pre_edu, levels=edu_order)
+both_florence$post_edu <- factor(both_florence$post_edu, levels=edu_order)
+
+income_order <- c("Less than $20,000","$20,000 to $40,000","$40,000 to $60,000",
+                  "$60,000 to $80,000","$80,000 to $100,000","$100,000 to $150,000",
+                  "Over $150,000")
+pre_florence$income  <- factor(pre_florence$income, levels=income_order)
+post_florence$income <- factor(post_florence$income, levels=income_order)
+both_florence$pre_income <- factor(both_florence$pre_income, levels=income_order)
+both_florence$post_income <- factor(both_florence$post_income, levels=income_order)
+
+years_in_res_order <- c("Less than 1 year","1  - 3 years","3 - 5 years",
+                        "5 - 10 years","More than 10 years")
+pre_florence$years_in_resident  <- factor(pre_florence$years_in_resident, levels=years_in_res_order)
+post_florence$years_in_resident <- factor(post_florence$years_in_resident, levels=years_in_res_order)
+both_florence$pre_years_in_resident <- factor(both_florence$pre_years_in_resident, levels=years_in_res_order)
+both_florence$post_years_in_resident <- factor(both_florence$post_years_in_resident, levels=years_in_res_order)
+
+distance_order <- c("Within 1 mile","1 to 4 miles","4 to 10 miles",
+                   "10 to 30 miles","30 to 50 miles","More than 50 miles")
+pre_florence$distance_to_coast  <- factor(pre_florence$distance_to_coast, levels=distance_order)
+post_florence$distance_to_coast <- factor(post_florence$distance_to_coast, levels=distance_order)
+both_florence$pre_distance_to_coast <- factor(both_florence$pre_distance_to_coast, levels=distance_order)
+both_florence$post_distance_to_coast <- factor(both_florence$post_distance_to_coast, levels=distance_order)
+
+house_order <- c("Mobile or  trailer home","Detached single family house","Duplex or triplex house","Condominium/apartment","Other")
+pre_florence$house_structure  <- factor(pre_florence$house_structure, levels=house_order)
+post_florence$house_structure <- factor(post_florence$house_structure, levels=house_order)
+
+num_vehicle_order <- c("None","One","More than one")
+pre_florence$num_vehicle  <- factor(pre_florence$num_vehicle, levels=num_vehicle_order)
+post_florence$num_vehicle <- factor(post_florence$num_vehicle, levels=num_vehicle_order)
+both_florence$pre_num_vehicle <- factor(both_florence$pre_num_vehicle, levels=num_vehicle_order)
+both_florence$post_num_vehicle <- factor(both_florence$post_num_vehicle, levels=num_vehicle_order)
+
+important_order <- c("Extremely important","Very important","Moderately important","Slightly important","Not at all important")
+pre_florence$importance_of_pet  <- factor(pre_florence$importance_of_pet, levels=important_order)
+post_florence$importance_of_pet <- factor(post_florence$importance_of_pet, levels=important_order)
+both_florence$pre_importance_of_pet <- factor(both_florence$pre_importance_of_pet, levels=important_order)
+both_florence$post_importance_of_pet <- factor(both_florence$post_importance_of_pet, levels=important_order)
+
+amount_order <- c("None at all","A little","A moderate amount","A lot","A great deal")
+
+## social influence
+#### pre
+pre_florence$contribute_final_decision <- factor(pre_florence$contribute_final_decision, levels=amount_order)
+pre_florence$household_discussion      <- factor(pre_florence$household_discussion, levels=amount_order)
+pre_florence$household_influence       <- factor(pre_florence$household_influence, levels=amount_order)
+pre_florence$outside_family_discussion <- factor(pre_florence$outside_family_discussion, levels=amount_order)
+pre_florence$outside_family_influence  <- factor(pre_florence$outside_family_influence, levels=amount_order)
+pre_florence$outside_friend_discussion <- factor(pre_florence$outside_friend_discussion, levels=amount_order)
+pre_florence$outside_friend_influence  <- factor(pre_florence$outside_friend_influence, levels=amount_order)
+pre_florence$neighbors_influence       <- factor(pre_florence$neighbors_influence, levels=amount_order)
+pre_florence$neighbors_observation     <- factor(pre_florence$neighbors_observation, levels=amount_order)
+#### post
+post_florence$contribute_final_decision <- factor(post_florence$contribute_final_decision, levels=amount_order)
+post_florence$household_discussion      <- factor(post_florence$household_discussion, levels=amount_order)
+post_florence$outside_family_discussion <- factor(post_florence$outside_family_discussion, levels=amount_order)
+post_florence$outside_friend_discussion <- factor(post_florence$outside_friend_discussion, levels=amount_order)
+post_florence$neighbors_observation     <- factor(post_florence$neighbors_observation, levels=amount_order)
+#### both
+both_florence$contribute_final_decision <- factor(both_florence$pre_contribute_final_decision, levels=amount_order)
+both_florence$household_discussion      <- factor(both_florence$pre_household_discussion, levels=amount_order)
+both_florence$household_influence       <- factor(both_florence$pre_household_influence, levels=amount_order)
+both_florence$outside_family_discussion <- factor(both_florence$pre_outside_family_discussion, levels=amount_order)
+both_florence$outside_family_influence  <- factor(both_florence$pre_outside_family_influence, levels=amount_order)
+both_florence$outside_friend_discussion <- factor(both_florence$pre_outside_friend_discussion, levels=amount_order)
+both_florence$outside_friend_influence  <- factor(both_florence$pre_outside_friend_influence, levels=amount_order)
+both_florence$neighbors_influence       <- factor(both_florence$pre_neighbors_influence, levels=amount_order)
+both_florence$neighbors_observation     <- factor(both_florence$pre_neighbors_observation, levels=amount_order)
+both_florence$contribute_final_decision <- factor(both_florence$post_contribute_final_decision, levels=amount_order)
+both_florence$household_discussion      <- factor(both_florence$post_household_discussion, levels=amount_order)
+both_florence$outside_family_discussion <- factor(both_florence$post_outside_family_discussion, levels=amount_order)
+both_florence$outside_friend_discussion <- factor(both_florence$post_outside_friend_discussion, levels=amount_order)
+both_florence$neighbors_observation     <- factor(both_florence$post_neighbors_observation, levels=amount_order)
+
+## infomation
+#### pre
+pre_florence$TVR_causualities   <- factor(pre_florence$TVR_causualities, levels= amount_order)
+pre_florence$TVR_dmg_done       <- factor(pre_florence$TVR_dmg_done, levels= amount_order)
+pre_florence$TVR_evac           <- factor(pre_florence$TVR_evac, levels= amount_order)
+pre_florence$TVR_forecasted_dmg <- factor(pre_florence$TVR_forecasted_dmg, levels= amount_order)
+pre_florence$TVR_preparing      <- factor(pre_florence$TVR_preparing, levels= amount_order)
+pre_florence$TVR_stay           <- factor(pre_florence$TVR_stay, levels= amount_order)
+pre_florence$TVR_traffic_jams   <- factor(pre_florence$TVR_traffic_jams, levels= amount_order)
+pre_florence$SM_causualities    <- factor(pre_florence$SM_causualities, levels= amount_order)
+pre_florence$SM_dmg_done        <- factor(pre_florence$SM_dmg_done, levels= amount_order)
+pre_florence$SM_evac            <- factor(pre_florence$SM_evac, levels= amount_order)
+pre_florence$SM_forecasted_dmg  <- factor(pre_florence$SM_forecasted_dmg, levels= amount_order)
+pre_florence$SM_preparing       <- factor(pre_florence$SM_preparing, levels= amount_order)
+pre_florence$SM_stay            <- factor(pre_florence$SM_stay, levels= amount_order)
+pre_florence$SM_traffic_jams    <- factor(pre_florence$SM_traffic_jams, levels= amount_order)
+#### post
+post_florence$TVR_causualities   <- factor(post_florence$TVR_causualities, levels= amount_order)
+post_florence$TVR_dmg_done       <- factor(post_florence$TVR_dmg_done, levels= amount_order)
+post_florence$TVR_evac           <- factor(post_florence$TVR_evac, levels= amount_order)
+post_florence$TVR_forecasted_dmg <- factor(post_florence$TVR_forecasted_dmg, levels= amount_order)
+post_florence$TVR_preparing      <- factor(post_florence$TVR_preparing, levels= amount_order)
+post_florence$TVR_stay           <- factor(post_florence$TVR_stay, levels= amount_order)
+post_florence$TVR_traffic_jams   <- factor(post_florence$TVR_traffic_jams, levels= amount_order)
+post_florence$SM_causualities    <- factor(post_florence$SM_causualities, levels= amount_order)
+post_florence$SM_dmg_done        <- factor(post_florence$SM_dmg_done, levels= amount_order)
+post_florence$SM_evac            <- factor(post_florence$SM_evac, levels= amount_order)
+post_florence$SM_forecasted_dmg  <- factor(post_florence$SM_forecasted_dmg, levels= amount_order)
+post_florence$SM_preparing       <- factor(post_florence$SM_preparing, levels= amount_order)
+post_florence$SM_stay            <- factor(post_florence$SM_stay, levels= amount_order)
+post_florence$SM_traffic_jams    <- factor(post_florence$SM_traffic_jams, levels= amount_order)
+#### both
+both_florence$pre_TVR_causualities   <- factor(both_florence$pre_TVR_causualities, levels= amount_order)
+both_florence$pre_TVR_dmg_done       <- factor(both_florence$pre_TVR_dmg_done, levels= amount_order)
+both_florence$pre_TVR_evac           <- factor(both_florence$pre_TVR_evac, levels= amount_order)
+both_florence$pre_TVR_forecasted_dmg <- factor(both_florence$pre_TVR_forecasted_dmg, levels= amount_order)
+both_florence$pre_TVR_preparing      <- factor(both_florence$pre_TVR_preparing, levels= amount_order)
+both_florence$pre_TVR_stay           <- factor(both_florence$pre_TVR_stay, levels= amount_order)
+both_florence$pre_TVR_traffic_jams   <- factor(both_florence$pre_TVR_traffic_jams, levels= amount_order)
+both_florence$pre_SM_causualities    <- factor(both_florence$pre_SM_causualities, levels= amount_order)
+both_florence$pre_SM_dmg_done        <- factor(both_florence$pre_SM_dmg_done, levels= amount_order)
+both_florence$pre_SM_evac            <- factor(both_florence$pre_SM_evac, levels= amount_order)
+both_florence$pre_SM_forecasted_dmg  <- factor(both_florence$pre_SM_forecasted_dmg, levels= amount_order)
+both_florence$pre_SM_preparing       <- factor(both_florence$pre_SM_preparing, levels= amount_order)
+both_florence$pre_SM_stay            <- factor(both_florence$pre_SM_stay, levels= amount_order)
+both_florence$pre_SM_traffic_jams    <- factor(both_florence$pre_SM_traffic_jams, levels= amount_order)
+both_florence$post_TVR_causualities   <- factor(both_florence$post_TVR_causualities, levels= amount_order)
+both_florence$post_TVR_dmg_done       <- factor(both_florence$post_TVR_dmg_done, levels= amount_order)
+both_florence$post_TVR_evac           <- factor(both_florence$post_TVR_evac, levels= amount_order)
+both_florence$post_TVR_forecasted_dmg <- factor(both_florence$post_TVR_forecasted_dmg, levels= amount_order)
+both_florence$post_TVR_preparing      <- factor(both_florence$post_TVR_preparing, levels= amount_order)
+both_florence$post_TVR_stay           <- factor(both_florence$post_TVR_stay, levels= amount_order)
+both_florence$post_TVR_traffic_jams   <- factor(both_florence$post_TVR_traffic_jams, levels= amount_order)
+both_florence$post_SM_causualities    <- factor(both_florence$post_SM_causualities, levels= amount_order)
+both_florence$post_SM_dmg_done        <- factor(both_florence$post_SM_dmg_done, levels= amount_order)
+both_florence$post_SM_evac            <- factor(both_florence$post_SM_evac, levels= amount_order)
+both_florence$post_SM_forecasted_dmg  <- factor(both_florence$post_SM_forecasted_dmg, levels= amount_order)
+both_florence$post_SM_preparing       <- factor(both_florence$post_SM_preparing, levels= amount_order)
+both_florence$post_SM_stay            <- factor(both_florence$post_SM_stay, levels= amount_order)
+both_florence$post_SM_traffic_jams    <- factor(both_florence$post_SM_traffic_jams, levels= amount_order)
+
+prob_order <- c("Extremely unlikely","Moderately unlikely","Slightly unlikely","Neither likely nor unlikely (50/50)","Slightly likely","Moderately likely","Extremely likely")
+## pre 
+pre_florence$evac_prob     <- factor(pre_florence$evac_prob, levels=prob_order)
+pre_florence$safety_prob   <- factor(pre_florence$safety_prob, levels=prob_order)
+pre_florence$supplier_prob <- factor(pre_florence$supplier_prob, levels=prob_order)
+pre_florence$job_lost_prob <- factor(pre_florence$job_lost_prob, levels=prob_order)
+## post
+post_florence$safety_prob <- factor(post_florence$safety_prob, levels=prob_order)
+## both
+both_florence$pre_evac_prob <- factor(both_florence$pre_evac_prob, levels=prob_order)
+both_florence$pre_safety_prob   <- factor(both_florence$pre_safety_prob, levels=prob_order)
+both_florence$pre_supplier_prob <- factor(both_florence$pre_supplier_prob, levels=prob_order)
+both_florence$pre_job_lost_prob <- factor(both_florence$pre_job_lost_prob, levels=prob_order)
+both_florence$post_safety_prob <- factor(both_florence$post_safety_prob, levels=prob_order)
+
+flood_depth_order <- c("Will not be flooded","1 foot or less","2 - 3 feet","4 - 5 feet",
+                       "More than 5 feet")
+pre_florence$flood_depth <- factor(pre_florence$flood_depth, levels=flood_depth_order)
+post_florence$flood_depth <- factor(post_florence$flood_depth, levels=flood_depth_order)
+both_florence$pre_flood_depth <- factor(both_florence$pre_flood_depth, levels=flood_depth_order)
+both_florence$post_flood_depth <- factor(both_florence$post_flood_depth, levels=flood_depth_order)
+
+electricity_dur_order <- c("Will not lose electricity","Less than one week","1 - 2 weeks","3 - 4 weeks","More than a month")
+pre_florence$electricity_lost_dur <- factor(pre_florence$electricity_lost_dur, levels=electricity_dur_order)
+post_florence$electricity_lost_dur <- factor(post_florence$electricity_lost_dur, levels=electricity_dur_order)
+both_florence$electricity_lost_dur <- factor(both_florence$pre_electricity_lost_dur, levels=electricity_dur_order)
+both_florence$electricity_lost_dur <- factor(both_florence$post_electricity_lost_dur, levels=electricity_dur_order)
+
+normal_cond_order <- c("Less than one week","1 - 2 weeks","3 -4 weeks","More than a month")
+pre_florence$normal_condition_return <- factor(pre_florence$normal_condition_return, levels=normal_cond_order)
+post_florence$normal_condition_return <- factor(post_florence$normal_condition_return, levels=normal_cond_order)
+both_florence$normal_condition_return <- factor(both_florence$pre_normal_condition_return, levels=normal_cond_order)
+both_florence$normal_condition_return <- factor(both_florence$post_normal_condition_return, levels=normal_cond_order)
+
+
+agree_order <- c("Fully disagree","Somewhat disagree","Neither agree nor disagree","Somewhat agree","Fully agree")
+post_florence$household_agreement <- factor(post_florence$household_agreement, levels=agree_order)
+post_florence$outside_family_agreement <- factor(post_florence$outside_family_agreement, levels=agree_order)
+post_florence$outside_friend_agreement <- factor(post_florence$outside_friend_agreement, levels=agree_order)
+post_florence$neighbors_agreement <- factor(post_florence$neighbors_agreement, levels=agree_order)
+
+both_florence$post_household_agreement <- factor(both_florence$post_household_agreement, levels=agree_order)
+both_florence$post_outside_family_agreement <- factor(both_florence$post_outside_family_agreement, levels=agree_order)
+both_florence$post_outside_friend_agreement <- factor(both_florence$post_outside_friend_agreement, levels=agree_order)
+both_florence$post_neighbors_agreement <- factor(both_florence$post_neighbors_agreement, levels=agree_order)
+
+## notice type factor
+pre_florence$mandatory_evac_notice <- factor(pre_florence$mandatory_evac_notice)
+pre_florence$voluntary_evac_notice <- factor(pre_florence$voluntary_evac_notice)
+pre_florence$voluntary_stay_notice <- factor(pre_florence$voluntary_stay_notice)
+pre_florence$mandatory_stay_notice <- factor(pre_florence$mandatory_stay_notice)
+
+post_florence$mandatory_evac_notice <- factor(post_florence$mandatory_evac_notice)
+post_florence$voluntary_evac_notice <- factor(post_florence$voluntary_evac_notice)
+post_florence$voluntary_stay_notice <- factor(post_florence$voluntary_stay_notice)
+post_florence$mandatory_stay_notice <- factor(post_florence$mandatory_stay_notice)
+
+## Date ordering
+when_first_hear_order <- c("September 6th or before","September 7th","September 8th",
+                           "September 9th","September 10th")
+pre_florence$when_first_hear <- factor(pre_florence$when_first_hear, levels = when_first_hear_order)
+
+when_prepare_stay_order <- c("September 6th or before","September 7th","September 8th",
+                       "September 9th","September 10th","September 11th","September 12th")
+post_florence$when_prepare_stay <- factor(post_florence$when_prepare_stay, 
+                                          levels = when_prepare_stay_order)
+notice_when_order <- c("September 6th or before","September 7th","September 8th",
+                       "September 9th","September 10th","September 11th",
+                       "September 12th","September 13th","September 14th",
+                       "September 15th or after")
+post_florence$notice_when <- factor(post_florence$notice_when, levels=notice_when_order)
+date_evac_order <- c("September 6th or before","September 7th","September 8th",
+                       "September 9th","September 10th","September 11th",
+                       "September 12th","September 13th","September 14th","September 15th or after")
+post_florence$date_evac <- factor(post_florence$date_evac, levels=date_evac_order)
+
+## Other don't care about order but need to translate it to factor for summarization purpose
+all_character_class_pre <- names(pre_florence[,sapply(pre_florence,is.character)])
+for(name in all_character_class_pre)
+{
+  pre_florence[[name]] <- as.factor(pre_florence[[name]])
+}
+
+all_character_class_post <- names(post_florence[,sapply(post_florence,is.character)])
+for(name in all_character_class_post)
+{
+  post_florence[[name]] <- as.factor(post_florence[[name]])
+}
+all_character_class_both <- names(both_florence[,sapply(both_florence,is.character)])
+for(name in all_character_class_both)
+{
+  both_florence[[name]] <- as.factor(both_florence[[name]])
+}
+
+```
+
+# Standard summarization in text 
+
+## Demographical Infomation
+#### Pre
+
+```{r}
+summary(pre_florence[5:25])
+```
+
+#### Post
+
+```{r}
+summary(post_florence[5:25])
+```
+
+## Social influence
+#### pre
+
+```{r}
+summary(pre_florence[26:34])
+```
+
+#### post
+
+```{r}
+summary(post_florence[26:34])
+```
+
+## Prev experience
+#### pre
+
+```{r}
+summary(pre_florence[35:43])
+```
+
+#### post
+
+```{r}
+summary(post_florence[35:40])
+```
+
+## Probability and Estimation
+#### pre
+
+```{r}
+summary(pre_florence[44:57])
+```
+
+#### post
+
+```{r}
+summary(post_florence[41:46])
+```
+
+## Infomation
+#### pre
+
+```{r}
+summary(pre_florence[58:73])
+```
+
+#### post
+
+```{r}
+summary(post_florence[47:62])
+```
+
+## Pre specific Question
+#### First hear
+
+```{r}
+summary(pre_florence[74:82])
+```
+
+## Post specific Question
+#### First hear, Official Notice, emergency request and decision
+
+```{r}
+summary(post_florence[63:71])
+```
+
+#### Evac specific question
+
+```{r}
+summary(post_florence[72:78])
+```
+
+#### Stay specific question
+
+```{r}
+summary(post_florence[79:83])
+```
+
+#### Notice type specific question
+
+```{r}
+summary(post_florence[84:88])
+```
+
+#### Correlation Table
+
+```{r echo=FALSE}
+y_list <- c(#"flood_cost","electricity_cost",
+            "traveling_cost","safe_place_cost","safety_prob",
+            "flood_depth","electricity_lost_dur","normal_condition_return","evac_decision_num")
+
+x_list <- c("age","gender","edu","income","house_structure","years_in_resident","distance_to_coast","num_vehicle",
+            "has_pet","family_size","child_0_5","child_6_12","child_13_18","elder_65_up",
+             "special_need_med","special_need_moving",
+             "mandatory_evac_notice","voluntary_evac_notice","prev_exp_decision",
+            #"flood_cost","electricity_cost",
+            "traveling_cost","safe_place_cost","safety_prob",
+            "flood_depth","electricity_lost_dur","normal_condition_return")
+## Clearning up some features
+pre_florence$evac_decision_num <- as.numeric(pre_florence$evac_prob)
+post_florence$evac_decision_num <- as.numeric(post_florence$evac_decision)
+pre_florence$prev_exp_decision <- ifelse(pre_florence$prev_exp == "No",0, ifelse(pre_florence$prev_exp_decision == "Evacuated",1,2))
+post_florence$prev_exp_decision <- ifelse(post_florence$prev_exp == "No",0, ifelse(post_florence$prev_exp_decision == "Evacuated",1,2))
+pre_florence <- pre_florence[which(pre_florence$heard_florence == "Yes"),]
+
+post_florence$traveling_cost <- ifelse(post_florence$evac_decision == "No", post_florence$traveling_est_stay, post_florence$traveling_cost_evac)
+post_florence$safe_place_cost <- ifelse(post_florence$evac_decision == "No", post_florence$place_cost_est_stay, post_florence$place_cost_evac)
+
+dat <- pre_florence 
+dat <- post_florence
+
+for(x in x_list)
+{
+  temp <- ""
+  for(y in y_list)
+  {
+    cor_temp <- round(cor(as.numeric(dat[[x]]),as.numeric(dat[[y]])),digits=2)
+    temp <- paste(temp,cor_temp, sep=" & ")
+  }
+  print(temp)
+}
+
+```
+
+```{r echo=FALSE}
+## helper function for ploting
+gen_bar_plot <- function(dat,plot_list)
+{
+  for(i in plot_list)
+  {
+    barplot(table(dat[[i]]),ylab="Number of response",xlab=i)
+  }
+}
+gen_box_plot <- function(dat,plot_list,maxy)
+{
+  for(i in plot_list)
+  {
+    boxplot(dat[[i]],ylab="value (count or cost)",xlab=i,ylim=c(0,maxy))
+  }
+}
+
+```
+
+## Pre Hurricane Florence
+### Ploting demographical information 
+
+```{r echo=FALSE}
+## Standard Summarization of Categorical variables in barplot
+category_to_plot <- c("gender","num_vehicle","has_pet",
+                      "child_0_5","child_6_12","child_13_18","elder_65_up",
+                      "special_need_med","special_need_moving")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+```{r echo=FALSE, fig.width=15}
+category_to_plot <- c("edu","income","house_structure","years_in_resident",
+                      "distance_to_coast")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+```{r echo=FALSE}
+## Standard summarization of numerical variables in boxplot
+numerical_to_plot <- c("family_size")
+gen_box_plot(pre_florence,numerical_to_plot,15)
+```
+
+### Ploing social influence
+
+```{r echo=FALSE, fig.width=10}
+#### list of things to plot
+category_to_plot <- c("contribute_final_decision","household_discussion","household_influence",
+                      "outside_family_discussion","outside_family_influence",
+                      "outside_friend_discussion","outside_friend_influence",
+                      "neighbors_observation","neighbors_influence")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+
+### Ploting previous experience
+
+```{r echo=FALSE, fig.width=12}
+#### list of things to plot
+category_to_plot <- c("place_to_evac","how_to_evac")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+```{r echo=FALSE}
+#### list of things to plot
+category_to_plot <- c("prev_exp","prev_exp_decision")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+
+### Ploting probability estimation 
+
+```{r echo=FALSE, fig.width=14}
+#### list of things to plot
+category_to_plot <- c("evac_prob","safety_prob","supplier_prob","job_lost_prob",
+                      "flood_depth","electricity_lost_dur","normal_condition_return",
+                      "hurricane_category")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+
+### Ploting utility equivalent and cost estimation
+
+```{r echo=FALSE}
+#### list of things to plot
+numerical_to_plot <- c("flood_cost","electricity_cost","shelter_cost",
+                       "traveling_cost","safe_place_cost")
+gen_box_plot(pre_florence,numerical_to_plot,3000)
+```
+```{r echo=FALSE}
+#### list of things to plot
+numerical_to_plot <- c("damage_est")
+gen_box_plot(pre_florence,numerical_to_plot,50000)
+```
+
+### Ploting information
+
+```{r echo=FALSE, fig.width=10}
+#### list of things to plot
+category_to_plot <- c("TVR_dmg_done","TVR_forecasted_dmg","TVR_causualities",
+                      "TVR_traffic_jams","TVR_preparing","TVR_stay","TVR_evac",
+                      "SM_dmg_done","SM_forecasted_dmg","SM_causualities",
+                      "SM_traffic_jams","SM_preparing","SM_stay","SM_evac")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+
+### Ploting specific pre questions
+
+```{r echo=FALSE}
+#### list of things to plot
+category_to_plot <- c("heard_florence","when_first_hear","official_notice",
+                      "mandatory_evac_notice","voluntary_evac_notice",
+                      "mandatory_stay_notice","voluntary_stay_notice")
+gen_bar_plot(pre_florence,category_to_plot)
+```
+
+## Post Florence Plot
+### Ploting demographical information 
+
+```{r echo=FALSE}
+## Standard Summarization of Categorical variables in barplot
+#### list of things to plot
+category_to_plot <- c("gender","num_vehicle","has_pet",
+                      "child_0_5","child_6_12","child_13_18","elder_65_up",
+                      "special_need_med","special_need_moving")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE, fig.width=15}
+category_to_plot <- c("edu","income","house_structure","years_in_resident",
+                      "distance_to_coast")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE}
+## Standard summarization of numerical variables in boxplot
+numerical_to_plot <- c("family_size")
+gen_box_plot(post_florence,numerical_to_plot,15)
+```
+
+### Ploing social influence
+
+```{r echo=FALSE, fig.width=10}
+#### list of things to plot
+category_to_plot <- c("contribute_final_decision","household_discussion","household_agreement",
+                      "outside_family_discussion","outside_family_agreement",
+                      "outside_friend_discussion","outside_friend_agreement",
+                      "neighbors_observation","neighbors_agreement")
+gen_bar_plot(post_florence,category_to_plot)
+```
+
+### Ploting previous experience
+
+```{r echo=FALSE}
+#### list of things to plot
+category_to_plot <- c("prev_exp","prev_exp_decision")
+gen_bar_plot(post_florence,category_to_plot)
+```
+
+### Ploting probability estimation 
+
+```{r echo=FALSE, fig.width=14}
+#### list of things to plot
+category_to_plot <- c("safety_prob",
+                      "flood_depth","electricity_lost_dur","normal_condition_return",
+                      "hurricane_category")
+gen_bar_plot(post_florence,category_to_plot)
+```
+
+### Ploting information
+
+```{r echo=FALSE, fig.width=10}
+#### list of things to plot
+category_to_plot <- c("TVR_dmg_done","TVR_forecasted_dmg","TVR_causualities",
+                      "TVR_traffic_jams","TVR_preparing","TVR_stay","TVR_evac",
+                      "SM_dmg_done","SM_forecasted_dmg","SM_causualities",
+                      "SM_traffic_jams","SM_preparing","SM_stay","SM_evac")
+gen_bar_plot(post_florence,category_to_plot)
+```
+
+### First heard, official notice, and decision
+
+```{r echo=FALSE}
+#### list of things to plot
+category_to_plot <- c("emergency_request_before","emergency_request_during",
+                      "emergency_request_after","official_notice",
+                      "mandatory_evac_notice","voluntary_evac_notice",
+                      "mandatory_stay_notice","voluntary_stay_notice",
+                      "evac_decision","same_choice")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE, fig.width=16}
+#### list of things to plot
+category_to_plot <- c("notice_when")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE}
+#### list of things to plot
+category_to_plot <- c("mandatory_evac_notice","voluntary_evac_notice",
+                      "mandatory_stay_notice","voluntary_stay_notice",
+                      "evac_decision","same_choice")
+gen_bar_plot(post_florence,category_to_plot)
+```
+
+
+### Evac related questions
+
+```{r echo=FALSE, fig.width=16}
+#### list of things to plot
+category_to_plot <- c("date_evac","time_evac","how_evac","where_evac",
+                      "how_far_evac")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE}
+#### list of things to plot
+numerical_to_plot <- c("traveling_cost_evac","place_cost_evac")
+gen_box_plot(post_florence,numerical_to_plot,3000)
+```
+
+### Stay related questions
+
+```{r echo=FALSE}
+#### list of things to plot
+category_to_plot <- c("prepare_stay")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE, fig.width=16}
+#### list of things to plot
+category_to_plot <- c("when_prepare_stay","amount_prepare_stay")
+gen_bar_plot(post_florence,category_to_plot)
+```
+```{r echo=FALSE}
+#### list of things to plot
+numerical_to_plot <- c("traveling_est_stay","place_cost_est_stay")
+gen_box_plot(post_florence,numerical_to_plot,3000)
+```
